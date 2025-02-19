@@ -20,6 +20,14 @@ tareas = [
 def main():
     return {'Tamo en linea con Fastapi'}
 
-@app.get('/Ver tareas',tags=['EP: Obtener todas las Tareas'])
+@app.get('/Vertareas',tags=['EP: Obtener todas las Tareas'])
 def verall():
     return {'Tareas Registradas': tareas}
+
+@app.get('/VerTareaID/{id}',tags=['EP: Obtener una tarea específica por su ID'])
+def TareaID(id:int):
+    for tarea in tareas:
+        if tarea ["id"]==id:
+            return tarea
+        raise HTTPException(status_code=404,detail="Tarea no encontrada")
+    return {f'Se muestra la tarea {id} ': tarea}
