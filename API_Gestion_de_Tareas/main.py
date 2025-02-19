@@ -31,3 +31,11 @@ def TareaID(id:int):
             return tarea
         raise HTTPException(status_code=404,detail="Tarea no encontrada")
     return {f'Se muestra la tarea {id} ': tarea}
+    
+@app.post('/RegistrarTarea/',tags=['EP: Crear una nueva tarea'])
+def CrearTarea(tarean:dict):
+    for tarea in tareas:
+        if tarea["id"]==tarean.get('id'):
+            raise HTTPException(status_code=400,detail="Error ID ya utilizada")    
+    tareas.append(tarean)
+    return {f'Se creo una nueva tarea: {tarean}'} 
