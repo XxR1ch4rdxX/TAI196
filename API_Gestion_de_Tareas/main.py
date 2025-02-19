@@ -47,3 +47,12 @@ def ActualizarTarea(tareaupdt:dict):
             tareas[index].update(tareaupdt)
             return {f'Se actualizo la tarea : {tareaupdt}'}
     raise HTTPException(status_code=404,detail="Tarea no encontrada")
+
+@app.delete('/EliminarTarea/',tags=['EP: Eliminar una tarea'])
+def EliminarT(id:int):
+    for tarea in tareas:
+        if tarea["id"]==id:
+            tareas.remove(tarea)
+            return {f'Se elimino la tarea con ID: {id}',f'Nueva lista de tareas:{tareas}'}
+        else:
+            raise HTTPException(status_code=404,detail="Esa id no tiene una tarea asociada")
