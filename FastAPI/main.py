@@ -1,6 +1,7 @@
 # git:https://github.com/XxR1ch4rdxX/TAI196
 from fastapi import FastAPI, HTTPException
-from typing import Optional
+from typing import Optional, List
+from pydantic import BaseModel
 
 app = FastAPI(
     title='FastAPI richy con documentacion',
@@ -8,15 +9,21 @@ app = FastAPI(
     version='0.0.1'
 )
 
+class ModelUsuario(BaseModel):
+    id:int
+    nombre:str
+    edad:int
+    correo:str
+
 #.\VEF\Scripts\activate
 #uvicorn main:app --reload --port 5000
 #Base de datos temporal
 usuarios = [
-    {"id":1,"nombre":"Ricardo","edad":25},
-    {"id":2,"nombre":"Giovanny","edad":23},
-    {"id":3,"nombre":"Sandoval","edad":24},
-    {"id":4,"nombre":"Bermudez","edad":26},
-    {"id":5,"nombre":"Pepito","edad":27},
+    {"id":1,"nombre":"Ricardo","edad":25,"correo":"Richy@gmail.com"},
+    {"id":2,"nombre":"Giovanny","edad":23,"correo":"Giovanny@gmail.com"},
+    {"id":3,"nombre":"Sandoval","edad":24,"correo":"Sandoval@exemplo.com"},
+    {"id":4,"nombre":"Bermudez","edad":26,"correo":"Bermudez@hola.com"},
+    {"id":5,"nombre":"Pepito","edad":27,"correo":"Pepeloco@hotnail.com"},
 ]
 
 @app.get("/",tags=['Raiz'])
@@ -24,26 +31,29 @@ def main():
     return {'Hola FastAPI!':' Hola Richy'}
 
 #----------endpoint Consultar-----------------#
-@app.get('/usuarios',tags=['Operaciones CRUD'])
+@app.get('/usuarios', response_model=List[ModelUsuario] , tags=['Operaciones CRUD'])
 def Consultar():
-    return {'Usuarios Registrados':usuarios}
+    return usuarios
 
-@app.post('/registrar/',tags=['Operaciones CRUD'])
-def Registrar(usuarionuevo:dict):
+#----------endpoint RegistroNuevo-----------------#
+@app.post('/registrar/', response_model=ModelUsuario,tags=['Operaciones CRUD'])
+def Registrar(UsuarioNuevo:ModelUsuario):
     for usr in usuarios:
-        if usr["id"]==usuarionuevo.get("id"):
+        if usr["id"]==UsuarioNuevo.id:
             raise HTTPException(status_code=400,detail="Error ID ya utilizada")
-    usuarios.append(usuarionuevo)
-    return usuarionuevo    
+        
+    usuarios.append(UsuarioNuevo)
+    return UsuarioNuevo    
 
-@app.put('/actualizar/{id}',tags=['Operaciones CRUD'])
-def Actualizar(id:int,usuarioactualizado:dict):
+#----------endpoint Actualizar-----------------#
+@app.put('/actualizar/{id}', response_model=ModelUsuario, tags=['Operaciones CRUD'])
+def actualizar(id: int, usuarioactualizado: ModelUsuario):
     for index, usr in enumerate(usuarios):
-        if usr["id"]==id:   
-           usuarios[index].update(usuarioactualizado)
-           return usuarios[index],usuarios
-    raise HTTPException(status_code=404,detail="Usuario no encontrado")   
-
+        if usr["id"] == id:
+            usuarios[index] = usuarioactualizado.model_dump()  
+            return usuarios[index]  
+    raise HTTPException(status_code=404, detail="Usuario no encontrado")
+#----------endpoint Eliminar-----------------#
 @app.delete('/borrar/',tags=['Operaciones CRUD'])
 def Borrar(idu:int):
     for usr in usuarios:

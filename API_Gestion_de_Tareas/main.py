@@ -8,12 +8,14 @@ app = FastAPI(
     version='Sandoval Bermudez Ricardo Giovanny'
 )
 
+
+    
 tareas = [
     {"id":1,"titulo":"Sacar a los perros","descripcion":"Sacar a los perros a pasear","vencimiento":"2025-12-02","estado":"completado"},
-    {"id":2,"titulo":"Sacar la basura","descripcion":"sacar la basura a la calle","vencimiento":"2025-19-02","estado":"no completado"},
+    {"id":2,"titulo":"Comprar el mandado","descripcion":"Comprar el mandado para la semana","vencimiento":"2025-15-02","estado":"no completado"},    
     {"id":3,"titulo":"Acabar la tarea","descripcion":"terminar la tarea del prof.isai","vencimiento":"2025-19-02","estado":"no completado"},
-    {"id":4,"titulo":"Lavar la ropa","descripcion":"lavar la ropa, ya huele mal","\vencimiento":"2025-13-02","estado":"completado"},
-    {"id":5,"titulo":"Dominar al mundo","descripcion":"unificar a los paises en una sola nacion","\vencimiento":"2100-01-01","estado":"no completado"},
+    {"id":4,"titulo":"Lavar la ropa","descripcion":"lavar la ropa, ya huele mal","vencimiento":"2025-13-02","estado":"completado"},
+    {"id":5,"titulo":"Dominar al mundo","descripcion":"unificar a los paises en una sola nacion","vencimiento":"2100-01-01","estado":"no completado"},
 ]
 
 @app.get("/",tags=['Raiz'])
@@ -28,9 +30,9 @@ def verall():
 def TareaID(id:int):
     for tarea in tareas:
         if tarea ["id"]==id:
-            return tarea
-        raise HTTPException(status_code=404,detail="Tarea no encontrada")
-    return {f'Se muestra la tarea {id} ': tarea}
+            return {f'Se muestra la tarea {id} ': tarea}
+    raise HTTPException(status_code=404,detail="Tarea no encontrada")
+    
 
 @app.post('/RegistrarTarea/',tags=['EP: Crear una nueva tarea'])
 def CrearTarea(tarean:dict):
@@ -54,5 +56,5 @@ def EliminarT(id:int):
         if tarea["id"]==id:
             tareas.remove(tarea)
             return {f'Se elimino la tarea con ID: {id}',f'Nueva lista de tareas:{tareas}'}
-        else:
-            raise HTTPException(status_code=404,detail="Esa id no tiene una tarea asociada")
+        
+    raise HTTPException(status_code=404,detail="Esa id no tiene una tarea asociada")
