@@ -1,20 +1,14 @@
 # git:https://github.com/XxR1ch4rdxX/TAI196
 from fastapi import FastAPI, HTTPException
 from typing import Optional, List
-from pydantic import BaseModel
+from modelsPydantic import ModelUsuario
 
 app = FastAPI(
     title='FastAPI richy con documentacion',
     description='Ricardo Giovanny Sandoval Bermudez',
     version='0.0.1'
 )
-
-class ModelUsuario(BaseModel):
-    id:int
-    nombre:str
-    edad:int
-    correo:str
-
+#Para correr el servidor en la terminal
 #.\VEF\Scripts\activate
 #uvicorn main:app --reload --port 5000
 #Base de datos temporal
