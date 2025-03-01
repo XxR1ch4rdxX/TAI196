@@ -1,9 +1,12 @@
 # git:https://github.com/XxR1ch4rdxX/TAI196
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException,Depends
 from fastapi.responses import JSONResponse
 from typing import Optional, List
 from modelsPydantic import ModelUsuario, ModelAuth
 from tokenGen import createToken
+from middleWares import BearerJWT
+
+
 app = FastAPI(
     title='FastAPI richy con documentacion',
     description='Ricardo Giovanny Sandoval Bermudez',
@@ -32,11 +35,12 @@ def login(autorizado:ModelAuth):
     if autorizado.correo == 'richy@upq.com' and autorizado.password=='123456789':
         token:str = createToken(autorizado.model_dump())
         print(token)
-        return{'token generado :)'}
+        return JSONResponse(content={"token":token})
+
     else:
         return {"Aviso: ":"Usuario no autorizado"}
 #----------endpoint Consultar-----------------#
-@app.get('/usuarios', response_model=List[ModelUsuario] , tags=['Operaciones CRUD'])
+@app.get('/usuarios',dependencies=[Depends(BearerJWT())], response_model=List[ModelUsuario] , tags=['Operaciones CRUD'])
 def Consultar():
     return usuarios
 
