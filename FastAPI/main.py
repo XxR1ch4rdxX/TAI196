@@ -6,12 +6,21 @@ from modelsPydantic import ModelUsuario, ModelAuth
 from tokenGen import createToken
 from middleWares import BearerJWT
 
+#importaciones para sqlalquemy
+#importacion de la sesion, la base y el motor
+from DB.conexion import Session,Base, engine
+#importacion de nuestros modelos de las tablas
+from models.modelsDB import User #Personas #Animales #etc
+
 
 app = FastAPI(
     title='FastAPI richy con documentacion',
     description='Ricardo Giovanny Sandoval Bermudez',
     version='0.0.1'
 )
+#levantar las tabls definidas en los modelo
+Base.metadata.create_all(bind=engine)
+
 #Para correr el servidor en la terminal
 #.\VEF\Scripts\activate
 #uvicorn main:app --reload --port 5000
@@ -22,6 +31,7 @@ usuarios = [
     {"id":3,"nombre":"Sandoval","edad":24,"correo":"Sandoval@exemplo.com"},
     {"id":4,"nombre":"Bermudez","edad":26,"correo":"Bermudez@hola.com"},
     {"id":5,"nombre":"Pepito","edad":27,"correo":"Pepeloco@hotnail.com"},
+    {"id:"}
 ]
 
 @app.get("/",tags=['Raiz'])
@@ -44,15 +54,26 @@ def login(autorizado:ModelAuth):
 def Consultar():
     return usuarios
 
-#----------endpoint RegistroNuevo-----------------#
+#----------endpoint RegistroNuevo------CON LA BASE EN SQLALCHEMY-----------#
 @app.post('/registrar/', response_model=ModelUsuario,tags=['Operaciones CRUD'])
 def Registrar(UsuarioNuevo:ModelUsuario):
-    for usr in usuarios:
-        if usr["id"]==UsuarioNuevo.id:
-            raise HTTPException(status_code=400,detail="Error ID ya utilizada")
+    db=Session()
+    try:
+        db.add(User(**UsuarioNuevo.model_dump()))
+        db.commit()
+        return  JSONResponse(status_code=201,
+                             content={
+                                 "Mensaje":"Usuario Guardado Correctamente",
+                                 "Usuario": UsuarioNuevo.model_dump() })
+    except Exception as e:
+        db.rollback()
+        return  JSONResponse(status_code=201,
+                             content={
+                                 "Mensaje":"Ha ocurrido un error al Guardar el usuario",
+                                 "Exepcion": str(e) })
+    finally:
+        db.close()
         
-    usuarios.append(UsuarioNuevo)
-    return UsuarioNuevo    
 
 #----------endpoint Actualizar-----------------#
 @app.put('/actualizar/{id}', response_model=ModelUsuario, tags=['Operaciones CRUD'])
