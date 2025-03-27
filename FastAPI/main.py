@@ -12,6 +12,7 @@ from DB.conexion import Session,Base, engine
 #importacion de nuestros modelos de las tablas
 from models.modelsDB import User #Personas #Animales #etc
 
+from fastapi.encoders import jsonable_encoder
 
 app = FastAPI(
     title='FastAPI richy con documentacion',
@@ -25,35 +26,49 @@ Base.metadata.create_all(bind=engine)
 #.\VEF\Scripts\activate
 #uvicorn main:app --reload --port 5000
 #Base de datos temporal
-usuarios = [
-    {"id":1,"nombre":"Ricardo","edad":25,"correo":"Richy@gmail.com"},
-    {"id":2,"nombre":"Giovanny","edad":23,"correo":"Giovanny@gmail.com"},
-    {"id":3,"nombre":"Sandoval","edad":24,"correo":"Sandoval@exemplo.com"},
-    {"id":4,"nombre":"Bermudez","edad":26,"correo":"Bermudez@hola.com"},
-    {"id":5,"nombre":"Pepito","edad":27,"correo":"Pepeloco@hotnail.com"},
-    {"id:"}
-]
+
 
 @app.get("/",tags=['Raiz'])
 def main():
     return {'Hola FastAPI!':' Hola Richy'}
 
 
-#----------endpoint para verificar con token JWT---------
-@app.post('/auth' ,tags=['Autenticacion'])
-def login(autorizado:ModelAuth):
-    if autorizado.correo == 'richy@upq.com' and autorizado.password=='123456789':
-        token:str = createToken(autorizado.model_dump())
-        print(token)
-        return JSONResponse(content={"token":token})
 
-    else:
-        return {"Aviso: ":"Usuario no autorizado"}
 #----------endpoint Consultar-----------------#
-@app.get('/usuarios',dependencies=[Depends(BearerJWT())], response_model=List[ModelUsuario] , tags=['Operaciones CRUD'])
-def Consultar():
-    return usuarios
 
+#dependencies=[Depends(BearerJWT())] 
+@app.get('/usuarios',tags=['Operaciones CRUD'])
+def Consultar():
+    db=Session()
+    try:
+        consulta=db.query(User).all()
+        return JSONResponse(content=jsonable_encoder(consulta))
+    except Exception as x:
+         return  JSONResponse(status_code=201,
+                             content={
+                                 "Mensaje":"Ha ocurrido un error al consultar",
+                                 "Exepcion": str(x) })
+    finally:
+        db.close()
+        
+#----------------endpoint----consulta por id-------------------------
+@app.get('/usuarios/{id}',tags=['Operaciones CRUD'])
+def ConsultarID(id:int):
+    db=Session()
+    try:
+        consulta=db.query(User).filter(User.id==id).first()
+        
+        if not consulta:
+            return JSONResponse(status_code=2001,content={"Mensaje":"No se encontro el usuario"})
+        return JSONResponse(content=jsonable_encoder(consulta))
+    
+    except Exception as x:
+         return  JSONResponse(status_code=201,
+                             content={
+                                 "Mensaje":"Ha ocurrido un error al consultar",
+                                 "Exepcion": str(x) })
+    finally:
+        db.close()
 #----------endpoint RegistroNuevo------CON LA BASE EN SQLALCHEMY-----------#
 @app.post('/registrar/', response_model=ModelUsuario,tags=['Operaciones CRUD'])
 def Registrar(UsuarioNuevo:ModelUsuario):
@@ -75,24 +90,33 @@ def Registrar(UsuarioNuevo:ModelUsuario):
         db.close()
         
 
-#----------endpoint Actualizar-----------------#
-@app.put('/actualizar/{id}', response_model=ModelUsuario, tags=['Operaciones CRUD'])
-def actualizar(id: int, usuarioactualizado: ModelUsuario):
-    for index, usr in enumerate(usuarios):
-        if usr["id"] == id:
-            usuarios[index] = usuarioactualizado.model_dump()  
-            return usuarios[index]  
-    raise HTTPException(status_code=404, detail="Usuario no encontrado")
-#----------endpoint Eliminar-----------------#
-@app.delete('/borrar/',tags=['Operaciones CRUD'])
-def Borrar(idu:int):
-    for usr in usuarios:
-        if usr["id"]==idu:
-            usuarios.remove(usr)
-            return {'Mensaje':'Usuario Eliminado'},usuarios   
-    raise HTTPException(status_code=404,detail="Usuario no encontrado")
+# #----------endpoint Actualizar-----------------#
+# @app.put('/actualizar/{id}', response_model=ModelUsuario, tags=['Operaciones CRUD'])
+# def actualizar(id: int, usuarioactualizado: ModelUsuario):
+#     for index, usr in enumerate(usuarios):
+#         if usr["id"] == id:
+#             usuarios[index] = usuarioactualizado.model_dump()  
+#             return usuarios[index]  
+#     raise HTTPException(status_code=404, detail="Usuario no encontrado")
+# #----------endpoint Eliminar-----------------#
+# @app.delete('/borrar/',tags=['Operaciones CRUD'])
+# def Borrar(idu:int):
+#     for usr in usuarios:
+#         if usr["id"]==idu:
+#             usuarios.remove(usr)
+#             return {'Mensaje':'Usuario Eliminado'},usuarios   
+#     raise HTTPException(status_code=404,detail="Usuario no encontrado")
     
-       
+#----------endpoint para verificar con token JWT---------
+@app.post('/auth' ,tags=['Autenticacion'])
+def login(autorizado:ModelAuth):
+    if autorizado.correo == 'richy@upq.com' and autorizado.password=='123456789':
+        token:str = createToken(autorizado.model_dump())
+        print(token)
+        return JSONResponse(content={"token":token})
+
+    else:
+        return {"Aviso: ":"Usuario no autorizado"}
     
 
 # @app.get("/promedio",tags=['EndPont-Promedio'])
