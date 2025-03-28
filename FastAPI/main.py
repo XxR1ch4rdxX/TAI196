@@ -89,6 +89,53 @@ def Registrar(UsuarioNuevo:ModelUsuario):
     finally:
         db.close()
         
+#----------endpoint Actualizar-----------------#
+
+@app.put('/actualizar/{id}', response_model=ModelUsuario, tags=['Operaciones CRUD'])
+def Actualizar(id:int, UsuarioActualizado:ModelUsuario):
+    db=Session()
+    try:
+        query=db.query(User).filter(User.id==id).first()
+        db.commit()
+        
+        if not query:
+            return JSONResponse(status_code=2001,content={"Mensaje":"No se encontro el usuario"})
+        
+        db.query(User).filter(User.id==id).update(UsuarioActualizado.model_dump())
+        db.commit()
+        return JSONResponse(content={"Se ha acutualizado el usuario":str(UsuarioActualizado)})
+        
+    except Exception as e:
+        db.rollback()
+        return  JSONResponse(status_code=201,
+                             content={
+                                 "Mensaje":"Ha ocurrido un error al actualizar el usuario",
+                                 "Exepcion": str(e) })
+    finally:
+        db.close()
+
+#----------endpoint Eliminar-----------------#
+@app.delete('/borrar/{id}', response_model=ModelUsuario, tags=['Operaciones CRUD'])
+def Borrar(id:int):
+    db=Session()
+    try:      
+        query1=db.query(User).filter(User.id==id).first()
+        db.commit()
+        if not query1:
+            return JSONResponse(status_code=2001,content={"Mensaje":"No se encontro el usuario"})
+        
+        db.delete(query1)
+        db.commit()
+        return JSONResponse(content=jsonable_encoder("Se borro al usuario con el id: "+str(id)))
+
+    except Exception as e:
+        db.rollback()
+        return  JSONResponse(status_code=201,
+                             content={
+                                 "Mensaje":"Ha ocurrido un error al eliminar el usuario",
+                                 "Exepcion": str(e) })
+    finally:
+        db.close()
 
 # #----------endpoint Actualizar-----------------#
 # @app.put('/actualizar/{id}', response_model=ModelUsuario, tags=['Operaciones CRUD'])
