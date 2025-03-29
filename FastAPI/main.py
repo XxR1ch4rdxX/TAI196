@@ -1,18 +1,13 @@
 # git:https://github.com/XxR1ch4rdxX/TAI196
-from fastapi import FastAPI, HTTPException,Depends
-from fastapi.responses import JSONResponse
-from typing import Optional, List
-from modelsPydantic import ModelUsuario, ModelAuth
-from tokenGen import createToken
-from middleWares import BearerJWT
+from fastapi import FastAPI 
+from Routers.usuarios import routerUsuario
+from Routers.auth import routerAuth
 
 #importaciones para sqlalquemy
 #importacion de la sesion, la base y el motor
-from DB.conexion import Session,Base, engine
+from DB.conexion import Base, engine
 #importacion de nuestros modelos de las tablas
-from models.modelsDB import User #Personas #Animales #etc
 
-from fastapi.encoders import jsonable_encoder
 
 app = FastAPI(
     title='FastAPI richy con documentacion',
@@ -21,6 +16,9 @@ app = FastAPI(
 )
 #levantar las tabls definidas en los modelo
 Base.metadata.create_all(bind=engine)
+
+app.include_router(routerUsuario)
+app.include_router(routerAuth)
 
 #Para correr el servidor en la terminal
 #.\VEF\Scripts\activate
@@ -34,108 +32,7 @@ def main():
 
 
 
-#----------endpoint Consultar-----------------#
 
-#dependencies=[Depends(BearerJWT())] 
-@app.get('/usuarios',tags=['Operaciones CRUD'])
-def Consultar():
-    db=Session()
-    try:
-        consulta=db.query(User).all()
-        return JSONResponse(content=jsonable_encoder(consulta))
-    except Exception as x:
-         return  JSONResponse(status_code=201,
-                             content={
-                                 "Mensaje":"Ha ocurrido un error al consultar",
-                                 "Exepcion": str(x) })
-    finally:
-        db.close()
-        
-#----------------endpoint----consulta por id-------------------------
-@app.get('/usuarios/{id}',tags=['Operaciones CRUD'])
-def ConsultarID(id:int):
-    db=Session()
-    try:
-        consulta=db.query(User).filter(User.id==id).first()
-        
-        if not consulta:
-            return JSONResponse(status_code=2001,content={"Mensaje":"No se encontro el usuario"})
-        return JSONResponse(content=jsonable_encoder(consulta))
-    
-    except Exception as x:
-         return  JSONResponse(status_code=201,
-                             content={
-                                 "Mensaje":"Ha ocurrido un error al consultar",
-                                 "Exepcion": str(x) })
-    finally:
-        db.close()
-#----------endpoint RegistroNuevo------CON LA BASE EN SQLALCHEMY-----------#
-@app.post('/registrar/', response_model=ModelUsuario,tags=['Operaciones CRUD'])
-def Registrar(UsuarioNuevo:ModelUsuario):
-    db=Session()
-    try:
-        db.add(User(**UsuarioNuevo.model_dump()))
-        db.commit()
-        return  JSONResponse(status_code=201,
-                             content={
-                                 "Mensaje":"Usuario Guardado Correctamente",
-                                 "Usuario": UsuarioNuevo.model_dump() })
-    except Exception as e:
-        db.rollback()
-        return  JSONResponse(status_code=201,
-                             content={
-                                 "Mensaje":"Ha ocurrido un error al Guardar el usuario",
-                                 "Exepcion": str(e) })
-    finally:
-        db.close()
-        
-#----------endpoint Actualizar-----------------#
-
-@app.put('/actualizar/{id}', response_model=ModelUsuario, tags=['Operaciones CRUD'])
-def Actualizar(id:int, UsuarioActualizado:ModelUsuario):
-    db=Session()
-    try:
-        query=db.query(User).filter(User.id==id).first()
-        db.commit()
-        
-        if not query:
-            return JSONResponse(status_code=2001,content={"Mensaje":"No se encontro el usuario"})
-        
-        db.query(User).filter(User.id==id).update(UsuarioActualizado.model_dump())
-        db.commit()
-        return JSONResponse(content={"Se ha acutualizado el usuario":str(UsuarioActualizado)})
-        
-    except Exception as e:
-        db.rollback()
-        return  JSONResponse(status_code=201,
-                             content={
-                                 "Mensaje":"Ha ocurrido un error al actualizar el usuario",
-                                 "Exepcion": str(e) })
-    finally:
-        db.close()
-
-#----------endpoint Eliminar-----------------#
-@app.delete('/borrar/{id}', response_model=ModelUsuario, tags=['Operaciones CRUD'])
-def Borrar(id:int):
-    db=Session()
-    try:      
-        query1=db.query(User).filter(User.id==id).first()
-        db.commit()
-        if not query1:
-            return JSONResponse(status_code=2001,content={"Mensaje":"No se encontro el usuario"})
-        
-        db.delete(query1)
-        db.commit()
-        return JSONResponse(content=jsonable_encoder("Se borro al usuario con el id: "+str(id)))
-
-    except Exception as e:
-        db.rollback()
-        return  JSONResponse(status_code=201,
-                             content={
-                                 "Mensaje":"Ha ocurrido un error al eliminar el usuario",
-                                 "Exepcion": str(e) })
-    finally:
-        db.close()
 
 # #----------endpoint Actualizar-----------------#
 # @app.put('/actualizar/{id}', response_model=ModelUsuario, tags=['Operaciones CRUD'])
@@ -155,16 +52,6 @@ def Borrar(id:int):
 #     raise HTTPException(status_code=404,detail="Usuario no encontrado")
     
 #----------endpoint para verificar con token JWT---------
-@app.post('/auth' ,tags=['Autenticacion'])
-def login(autorizado:ModelAuth):
-    if autorizado.correo == 'richy@upq.com' and autorizado.password=='123456789':
-        token:str = createToken(autorizado.model_dump())
-        print(token)
-        return JSONResponse(content={"token":token})
-
-    else:
-        return {"Aviso: ":"Usuario no autorizado"}
-    
 
 # @app.get("/promedio",tags=['EndPont-Promedio'])
 # def promedio():
